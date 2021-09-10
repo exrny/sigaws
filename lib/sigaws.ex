@@ -233,19 +233,20 @@ defmodule Sigaws do
             key
         end
 
-      {:ok, %{
-        req_path: req_path,
-        method: method,
-        normalize_path: normalize_path,
-        params: params,
-        headers: headers,
-        body: body,
-        signed_at: signed_at_amz_dt,
-        region: rg,
-        service: sv,
-        access_key: creds[:access_key],
-        signing_key: signing_key
-      }}
+      {:ok,
+       %{
+         req_path: req_path,
+         method: method,
+         normalize_path: normalize_path,
+         params: params,
+         headers: headers,
+         body: body,
+         signed_at: signed_at_amz_dt,
+         region: rg,
+         service: sv,
+         access_key: creds[:access_key],
+         signing_key: signing_key
+       }}
     end
   end
 
@@ -320,9 +321,9 @@ defmodule Sigaws do
   @secret_error {:error, :invalid_input, "secret/signing_key"}
   @spec creds_opts(map) :: {:ok, map} | {:error, term}
   defp creds_opts(%{} = opts_map) do
-    ak = opts_map[:access_key]
-    sk = opts_map[:signing_key]
-    se = opts_map[:secret] || System.get_env("AWS_SECRET_ACCESS_KEY")
+    ak = retrieve_runtime_value(opts_map[:access_key])
+    sk = retrieve_runtime_value(opts_map[:signing_key])
+    se = retrieve_runtime_value(opts_map[:secret])
 
     cond do
       is_binary(ak) && is_binary(sk) -> {:ok, %{access_key: ak, signing_key: sk}}
@@ -331,6 +332,12 @@ defmodule Sigaws do
       true -> @secret_error
     end
   end
+
+  defp retrieve_runtime_value({:system, env_key}) do
+    System.get_env(env_key)
+  end
+
+  defp retrieve_runtime_value(value), do: value
 
   @provider_error {:error, :invalid_input, "provider"}
   defp provider_opt(%{provider: p}) when p != nil and is_atom(p), do: {:ok, p}
